@@ -46,32 +46,10 @@ void printError(FILE* file, const char* format, ...)
 
 // include original shaderc code files
 #include "../../bgfx/tools/shaderc/shaderc.cpp"
-#include "../../bgfx/tools/shaderc/shaderc_hlsl.cpp"
-#include "../../bgfx/tools/shaderc/shaderc_glsl.cpp"
 //#define static_allocate static_allocate_shaderc
 //#define static_deallocate static_deallocate_shaderc
 //#include "../../bgfx/tools/shaderc/shaderc_spirv.cpp"
 //#include "../../bgfx/tools/shaderc/shaderc_pssl.cpp"
-
-namespace bgfx 
-{
-    bool compilePSSLShader(const Options&, uint32_t, const std::string&, bx::WriterI*)
-    {
-        return false;
-    }
-
-    bool compileSPIRVShader(const Options&, uint32_t, const std::string&, bx::WriterI*)
-    {
-        return false;
-    }
-
-    const char* getPsslPreamble()
-    {
-        return "";
-    }
-}
-
-
 
 #include "brtshaderc.h"
 using namespace bgfx;
@@ -110,7 +88,7 @@ namespace shaderc
             return nullptr;
         }
 
-        int32_t write(const void* _data, int32_t _size, bx::Error* _err)
+        int32_t write(const void* _data, int32_t _size, bx::Error* _err) override
         {
             const char* data = (const char*)_data;
             _buffer.insert(_buffer.end(), data, data+_size);
@@ -238,7 +216,8 @@ namespace shaderc
         // set varyingdef
         std::string defaultVarying = dir + "varying.def.sc";
         const char* varyingdef = varyingPath ? varyingPath : defaultVarying.c_str();
-        bgfx::File attribdef(varyingdef);
+        auto attribdef = bgfx::File();
+        attribdef.load(varyingdef);
         const char* parse = attribdef.getData();
         if (NULL != parse
         &&  *parse != '\0')
@@ -480,7 +459,8 @@ namespace shaderc
         {
             std::string defaultVarying = dir + "varying.def.sc";
             const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
-            File attribdef(varyingdef);
+            auto attribdef = File();
+            attribdef.load(varyingdef);
             const char* parse = attribdef.getData();
             if (NULL != parse
             &&  *parse != '\0')
@@ -534,6 +514,7 @@ namespace shaderc
             bx::close(writer);
             ///@delete writer;
         }
+      return 0;
     }
 
     const bgfx::Memory* compileShader(int argc, const char* argv[])
